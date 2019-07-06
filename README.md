@@ -9,6 +9,7 @@
 
     鼠标指针位于下边缘时控制纵向缩放
 
+```C++
 
     //设置图表大小
     
@@ -32,4 +33,7 @@
 
     //隐藏鼠标指针的操作
     void sethide(bool hide);
+```
 
+### Frame 
+![DemoFrame1](https://github.com/gengyuchao/Qt_Curve_Oscilloscope_chart/blob/master/Image/Osc_Chart_ui.png)
