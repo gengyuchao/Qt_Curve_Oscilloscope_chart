@@ -37,7 +37,7 @@
 
 # Example
 
-使用代码方法
+## 使用代码方法
 ```C++
 #include "osc_chart.h"
 int number;
@@ -56,7 +56,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 ```
 
-使用UI方法
+## 使用UI方法
+
  在UI界面拉出一个Label控件，设置好大小（需要设置一个最小值），右击控件 -点击-> 提升为 添加 OSC_chart 类型，将 QLabel 提升为 OSC_chart 类型，就可以直接使用了
 
  ```C++
