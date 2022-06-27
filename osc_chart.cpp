@@ -52,7 +52,7 @@ OSC_chart::OSC_chart( QWidget * parent )
 void OSC_chart::resizeEvent(QResizeEvent *event)
 {
     painter.end();
-    pixmap=QPixmap(this->width(),this->height());//画布
+    pixmap=QPixmap(this->width()-this->lineWidth()*2,this->height()-this->lineWidth()*2);//画布
     pixmap.fill(Qt::transparent);
     painter.begin(&pixmap);//绘图
     Draw_Chart();
@@ -128,11 +128,17 @@ void OSC_chart::wheelEvent(QWheelEvent  *event)
     static int last_Pots_multiple_x,last_Pots_multiple_y;
     last_Pots_multiple_x=Pots_multiple_x;
     last_Pots_multiple_y=Pots_multiple_y;
-
-    if(event->pos().x()<30)
+#if (QT_VERSION <= QT_VERSION_CHECK(6,0,0))
+    QPointF position = event->pos();
+    int wheel_delta = event->delta();
+#else
+    QPointF position = event->position();
+    int wheel_delta = event->angleDelta().y();
+#endif
+    if(position.x()<30)
     {
         double OSC_multiple_x_last=OSC_multiple_x;
-        if(event->delta()>0)
+        if(wheel_delta>0)
         {
 
             //以10为基础开始 自动计算每次缩放的大小
@@ -142,7 +148,7 @@ void OSC_chart::wheelEvent(QWheelEvent  *event)
             if(last_Pots_multiple_x/2>=arange(weight))//如果坐标步长小于当前步长的一半，则重新自动计算步长
                 if(arange(weight)>0)//防止计算出来的步长为0
                     Pots_multiple_x=arange(weight);
-            offset_x=(event->pos().x()-30)-((event->pos().x()-30)-offset_x)/OSC_multiple_x_last*OSC_multiple_x;
+            offset_x=(position.x()-30)-((position.x()-30)-offset_x)/OSC_multiple_x_last*OSC_multiple_x;
         }
         else
         {
@@ -154,13 +160,13 @@ void OSC_chart::wheelEvent(QWheelEvent  *event)
             if(last_Pots_multiple_x*2<=arange(weight))//如果坐标步长大于当前步长的一倍，则重新自动计算步长
                 Pots_multiple_x=arange(weight);
         }
-        offset_x=(event->pos().x()-30)-((event->pos().x()-30)-offset_x)/OSC_multiple_x_last*OSC_multiple_x;
+        offset_x=(position.x()-30)-((position.x()-30)-offset_x)/OSC_multiple_x_last*OSC_multiple_x;
     }
 
-    if(event->pos().y()>this->height()-30)
+    if(position.y()>this->height()-30)
     {
         double OSC_multiple_y_last=OSC_multiple_y;
-        if(event->delta()>0)
+        if(wheel_delta>0)
         {
             //以10为基础开始 自动计算每次缩放的大小
             OSC_multiple_y=OSC_multiple_y*11/10;
@@ -180,14 +186,14 @@ void OSC_chart::wheelEvent(QWheelEvent  *event)
             if(last_Pots_multiple_y*2<=arange(weight))
             Pots_multiple_y=arange(weight);
         }
-        offset_y=-(this->height()-30-event->pos().y())+((this->height()-30-event->pos().y())+offset_y)/OSC_multiple_y_last*OSC_multiple_y;
+        offset_y=-(this->height()-30-position.y())+((this->height()-30-position.y())+offset_y)/OSC_multiple_y_last*OSC_multiple_y;
     }
 
 
     //对于大部分区域 同时更新offset
-    if(event->pos().x()>30 && event->pos().y()<this->height()-30)
+    if(position.x()>30 && position.y()<this->height()-30)
     {
-        if(event->delta()>0)
+        if(wheel_delta>0)
         {
             double OSC_multiple_x_last=OSC_multiple_x;
             //以10为基础开始 自动计算每次缩放的大小
@@ -198,7 +204,7 @@ void OSC_chart::wheelEvent(QWheelEvent  *event)
                 if(arange(weight)>0)//防止计算出来的步长为0
                     Pots_multiple_x=arange(weight);
 
-            offset_x=(event->pos().x()-30)-((event->pos().x()-30)-offset_x)/OSC_multiple_x_last*OSC_multiple_x;
+            offset_x=(position.x()-30)-((position.x()-30)-offset_x)/OSC_multiple_x_last*OSC_multiple_x;
 
             double OSC_multiple_y_last=OSC_multiple_y;
             //以10为基础开始 自动计算每次缩放的大小
@@ -208,7 +214,7 @@ void OSC_chart::wheelEvent(QWheelEvent  *event)
             if(last_Pots_multiple_y/2>=arange(height))
                 if(arange(height)>0)
             Pots_multiple_y=arange(height);
-            offset_y=-(this->height()-30-event->pos().y())+((this->height()-30-event->pos().y())+offset_y)/OSC_multiple_y_last*OSC_multiple_y;
+            offset_y=-(this->height()-30-position.y())+((this->height()-30-position.y())+offset_y)/OSC_multiple_y_last*OSC_multiple_y;
         }
         else
         {
@@ -220,7 +226,7 @@ void OSC_chart::wheelEvent(QWheelEvent  *event)
             int weight=(int)(this->width()/OSC_multiple_x)/Step_x;
             if(last_Pots_multiple_x*2<=arange(weight))//如果坐标步长大于当前步长的一倍，则重新自动计算步长
                 Pots_multiple_x=arange(weight);
-            offset_x=(event->pos().x()-30)-((event->pos().x()-30)-offset_x)/OSC_multiple_x_last*OSC_multiple_x;
+            offset_x=(position.x()-30)-((position.x()-30)-offset_x)/OSC_multiple_x_last*OSC_multiple_x;
 
             double OSC_multiple_y_last=OSC_multiple_y;
             //以10为基础开始 自动计算每次缩放的大小
@@ -230,7 +236,7 @@ void OSC_chart::wheelEvent(QWheelEvent  *event)
             int height=(int)(this->height()/OSC_multiple_y)/Step_y;
             if(last_Pots_multiple_y*2<=arange(height))
             Pots_multiple_y=arange(height);
-            offset_y=-(this->height()-30-event->pos().y())+((this->height()-30-event->pos().y())+offset_y)/OSC_multiple_y_last*OSC_multiple_y;
+            offset_y=-(this->height()-30-position.y())+((this->height()-30-position.y())+offset_y)/OSC_multiple_y_last*OSC_multiple_y;
         }
     }
 
@@ -242,7 +248,7 @@ void OSC_chart::wheelEvent(QWheelEvent  *event)
         pixmap.fill(Qt::transparent);
         Draw_Chart();
         //下面这句话无用 使用时在滚轮滑动的时候会显示十字指针
-        Draw_Cross_pointer(event->pos().x(),event->pos().y());
+        Draw_Cross_pointer(position.x(),position.y());
 
         setPixmap(pixmap);
 
@@ -540,6 +546,11 @@ void OSC_chart::slotmoveing(QMouseEvent *event)
 //    pixmap=QPixmap(this->width(),this->height());//画布
 //    pixmap.fill(Qt::transparent);
 //    painter.begin(&pixmap);//绘图
+#if (QT_VERSION <= QT_VERSION_CHECK(6,0,0))
+    QPointF position = event->pos();
+#else
+    QPointF position = event->position();
+#endif
 
     //画pixmap前清除原来的内容 pixmap和painter为私有变量
     pixmap.fill(Qt::transparent);
@@ -549,7 +560,7 @@ void OSC_chart::slotmoveing(QMouseEvent *event)
     Draw_Chart();
 
     painter.setPen(Qt::blue);//设置指针颜色
-    Draw_Cross_pointer(event->pos().x(),event->pos().y());
+    Draw_Cross_pointer(position.x(),position.y());
 
     setPixmap(pixmap);
 
@@ -590,9 +601,14 @@ void OSC_chart::slotClicked(QMouseEvent *event)
 }
 void OSC_chart::mousePressEvent(QMouseEvent *event)
 {
+#if (QT_VERSION <= QT_VERSION_CHECK(6,0,0))
+    QPointF position = event->pos();
+#else
+    QPointF position = event->position();
+#endif
     if(event->button() == Qt::LeftButton)
     {
-        start_x=event->pos().x()-offset_x,start_y=event->pos().y()-offset_y;
+        start_x=position.x()-offset_x,start_y=position.y()-offset_y;
         start_flag=1;
     }
     emit clicked(event);
@@ -601,14 +617,19 @@ void OSC_chart::mousePressEvent(QMouseEvent *event)
 
 void OSC_chart::mouseMoveEvent(QMouseEvent *event)
 {
+#if (QT_VERSION <= QT_VERSION_CHECK(6,0,0))
+    QPointF position = event->pos();
+#else
+    QPointF position = event->position();
+#endif
     if(start_flag==1)
     {
         //防止超过最大处理数
-        if(((this->height()-event->pos().y()+start_y)/OSC_multiple_y)<1000000)
-            offset_y=event->pos().y()-start_y;
+        if(((this->height()-position.y()+start_y)/OSC_multiple_y)<1000000)
+            offset_y=position.y()-start_y;
 
-        if(((this->width()-event->pos().x()+start_x)/OSC_multiple_x)<1000000)
-            offset_x=event->pos().x()-start_x;
+        if(((this->width()-position.x()+start_x)/OSC_multiple_x)<1000000)
+            offset_x=position.x()-start_x;
     }
     emit slotmoveing(event);
 }
