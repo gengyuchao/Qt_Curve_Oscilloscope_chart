@@ -76,18 +76,25 @@ public:
     void set_chart(int x, int y, int w, int h);
     void View_Chart();
 
+    void Set_Line_name(int Line_num,QString name);
     void Add_Line_Data(int Line_num,int pos_y);
     void Add_Line_Data_XY(int Line_num,int pos_x,int pos_y);
     //鼠标事件
     QMouseEvent *externevent;
 
+    QString line_name[16];
     QList<int> data_x[16];
     QList<int> data_y[16];
     double Set_Chart_Auto(void);
 
 
 
-    int start_x=0,start_y=0,offset_x=0,offset_y=0,start_flag=0;
+    int start_x=0;  // 鼠标左键按下时，鼠标指针的点距离原点的位置x
+    int start_y=0;  // 鼠标左键按下时，鼠标指针的点距离原点的位置y
+    int offset_x=0; // 鼠标左键拖拽移动距离原点的位置x
+    int offset_y=0; // 鼠标左键拖拽移动距离原点的位置y
+    int start_flag=0;
+    int MAX_INT_VALUE = INT32_MAX;
 signals:
     void clicked(QMouseEvent *event);
     void moveing(QMouseEvent *event);

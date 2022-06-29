@@ -46,9 +46,14 @@ OSC_chart::OSC_chart( QWidget * parent )
     connect(this, SIGNAL(moveing( QMouseEvent* )), this, SLOT(slotmoveing(QMouseEvent*)));
     connect(this, SIGNAL(doubleClicked( QMouseEvent* )), this, SLOT(slotdoubleClicked(QMouseEvent*)));
     this->setMouseTracking(true);
+    // 1.QLabel是放在布局里面的，所以无法直接调节QLabel大小，只能设置窗口大小。
+    // 2.主窗口调节也受限也子窗口，假如子窗口无法进行调节的话那么主窗口也无法调节。
+    // 3.实际加载图片的时候发现对窗口调用resize只能放大窗口，缩小无效。 把QLabel的sizePolicy设置为Ignored就可以自由放大缩小了。
+    this->setSizePolicy(QSizePolicy::Ignored,QSizePolicy::Ignored);
 
     OSC_multiple=50;
 }
+
 void OSC_chart::resizeEvent(QResizeEvent *event)
 {
     painter.end();
@@ -58,6 +63,7 @@ void OSC_chart::resizeEvent(QResizeEvent *event)
     Draw_Chart();
     setPixmap(pixmap);
 }
+
 //设置图标大小 初始化绘图设备 (首次初始化使用 ，可设为私有函数并去除else部分 因为在resizeEvent已经实现)
 void OSC_chart::set_chart(int x, int y, int w, int h)
 {
@@ -279,49 +285,59 @@ void OSC_chart::Draw_Chart(/*QPainter *painter*/)
     painter.drawText(this->width()/2,this->height()/2,"  "+QString::number((int)(offset_x),10)+ "Y:"+QString::number((int)(offset_y),10));
 
 
+    if(1)
     {
-        int range_width=(this->width()-30)/OSC_multiple_x;
-        //初始位置是起点+偏移量的相对坐标 范围是相对范围+偏移量的相对坐标+多一次的显示（保证生成的最后一根线是从最外面开始的）
-        for(int i=0-offset_x/OSC_multiple_x;i<range_width-offset_x/OSC_multiple_x+Pots_multiple_x;i++)
-        {
-            if(i%Pots_multiple_x==0)
-            {
-                painter.drawText(i*OSC_multiple_x+30+offset_x,this->height()-20,QString::number(i,10));
-            }
-
-        }
-
-
         //虚线
         painter.setPen(Qt::DashLine);
-        //painter.drawLine(30,OSC_label->height()/2,OSC_label->width()+30,OSC_label->height()/2);
-        //painter.drawLine(OSC_label->width()/2,30,OSC_label->width()/2,OSC_label->height()-30);
+        int Step_data_x = Pots_multiple_x;
         //初始位置是起点+偏移量的相对坐标 范围是相对范围+偏移量的相对坐标+多一次的显示（保证生成的最后一根线是从最外面开始的）
-        for(int i=0-offset_x/OSC_multiple_x;i<range_width-offset_x/OSC_multiple_x+Pots_multiple_x;i++)
+        for(int i=0;i<=Step_x*2;i++)
         {
-            if(i%Pots_multiple_x==0)
-            painter.drawLine(i*OSC_multiple_x+30+offset_x,this->height()-20,i*OSC_multiple_x+30+offset_x,0);
+            // 实际数据对应的x轴的坐标
+            int data_width=i*Step_data_x - (int)(offset_x / OSC_multiple_x /Step_data_x) * (int)Step_data_x ;
+            // 作图时x轴的坐标
+            int paint_width=data_width*OSC_multiple_x + offset_x + 30;
+
+            if(paint_width < 30)
+            {
+                continue;
+            }
+            if (paint_width > this->width())
+            {
+                break;
+            }
+
+            painter.drawText(paint_width,this->height()-20,QString::number(data_width,10));
+            painter.drawLine(paint_width,this->height()-20,paint_width,0);
         }
 
     }
 
-
+    if(1)
     {
-         int range_height=(this->height()-30)/OSC_multiple_y;
-         //初始位置是起点+偏移量的相对坐标 范围是相对范围+偏移量的相对坐标+多一次的显示（保证生成的最后一根线是从最外面开始的）
-         for(int i=0+offset_y/OSC_multiple_y;i<range_height+offset_y/OSC_multiple_y+Pots_multiple_y;i++)
-         {
-             if(i%Pots_multiple_y==0)
-             painter.drawText(10,this->height()-30-i*OSC_multiple_y+offset_y,QString::number(i,10));
-         }
-         //虚线
-         painter.setPen(Qt::DashLine);
-         //初始位置是起点+偏移量的相对坐标 范围是相对范围+偏移量的相对坐标+多一次的显示（保证生成的最后一根线是从最外面开始的）
-         for(int i=0+offset_y/OSC_multiple_y;i<range_height+offset_y/OSC_multiple_y+Pots_multiple_y;i++)
-         {
-             if(i%Pots_multiple_y==0)
-             painter.drawLine(10,this->height()-30-i*OSC_multiple_y+offset_y,this->width(),this->height()-30-i*OSC_multiple_y+offset_y);
-         }
+        //虚线
+        painter.setPen(Qt::DashLine);
+        int Step_data_y = Pots_multiple_y;
+        //初始位置是起点+偏移量的相对坐标 范围是相对范围+偏移量的相对坐标+多一次的显示（保证生成的最后一根线是从最外面开始的）
+        for(int i=0;i<=Step_y*2;i++)
+        {
+            // 实际数据对应的y轴的坐标
+            int data_height=i*Step_data_y +  (int)(offset_y / OSC_multiple_y /Step_data_y) * (int)Step_data_y ;
+            // 作图时y轴的坐标
+            int paint_height=this->height() - 30 - (data_height*OSC_multiple_y  - offset_y);
+            if (paint_height > this->height() - 30)
+            {
+                continue;
+            }
+            if (paint_height < 0)
+            {
+                break;
+            }
+
+            painter.drawText(10,paint_height,QString::number(data_height,10));
+            painter.drawLine(10,paint_height,this->width(),paint_height);
+        }
+
     }
 
 //    if(data_x[0].isEmpty()==false)
@@ -357,7 +373,8 @@ void OSC_chart::Draw_Wave(QList<int> chart_x,QList<int> chart_y)
     {
 
         int x=0,y=0,last_x=30,last_y=this->height()-30;
-        if(offset_x<0)
+        int last_data_index = 0;  //为高频曲线记录上一个点的索引
+        if(offset_x<0) // 向右移动
         {
             if(-offset_x/OSC_multiple_x>=chart_x.length()-1)//如果起点已经超出列表范围 那么直接退出
                 return;
@@ -365,40 +382,103 @@ void OSC_chart::Draw_Wave(QList<int> chart_x,QList<int> chart_y)
             {
                 last_x=chart_x[(int)(-offset_x/OSC_multiple_x)-1]*OSC_multiple_x+30;
                 last_y=this->height()-chart_y[(int)(-offset_x/OSC_multiple_x)-1]*OSC_multiple_y-30;
+                last_data_index = (int)(-offset_x/OSC_multiple_x)-1;
             }//else
                 //qDebug()<<"errot";
         }
+        else {
+            last_x=chart_x[0]*OSC_multiple_x+30;
+            last_y=this->height()-chart_y[0]*OSC_multiple_y-30;
+            last_data_index = 0;
+        }
+        // 考虑最后一个点可能会超出画布，所以把计算用的画布延 长一个数据单位
+        int max_canvas_width = this->width()-offset_x + Pots_multiple_x*OSC_multiple_x;
 
-        for(int i=0-offset_x;i<this->width()-offset_x;i++)
+        for(int i=0-offset_x;i<max_canvas_width;i++) // 遍历图像上的像素点，找到对应的数据点作图
         {
+            // i 表示移动（offset）后，被遍历图像的相对位置，绘图遍历总长度还是图像的长度
             if(i<=0)
             {
                 i=0;
             }
-            if(i/OSC_multiple_x>=chart_x.length()-1)
+
+            double double_data_index=(double)(i/OSC_multiple_x);
+
+            if (double_data_index > __INT32_MAX__)
+            {
+                qDebug() << "data_index is too big " << double_data_index;
+                return;
+            }
+
+            int data_index=(int)double_data_index;
+
+            if(data_index>=chart_x.length()-1)
+            {
                 break;
+            }
 
             if(true)//公式已统一 不在分情况
             {
-                if(chart_x[(int)(i/OSC_multiple_x)+1]>chart_x[(int)(i/OSC_multiple_x)])
-                    x=chart_x[(int)(i/OSC_multiple_x)+1]*OSC_multiple_x+30;
-                else if(i==0&&chart_x[(int)(i/OSC_multiple_x)]==0)//如果显示的第一个点是0
-                    x=chart_x[(int)(i/OSC_multiple_x)]*OSC_multiple_x+30;//那么第一个画的点也是0点 相当于原地不动画了一个点
+                if(chart_x[data_index]>=chart_x[last_data_index])
+                    x=chart_x[data_index]*OSC_multiple_x+30;
+                else if(i==0&&chart_x[data_index]==0)//如果显示的第一个点是0
+                    x=chart_x[data_index]*OSC_multiple_x+30;//那么第一个画的点也是0点 相当于原地不动画了一个点
                 else
                     break;
-                y=this->height()-chart_y[(int)(i/OSC_multiple_x)+1]*OSC_multiple_y-30;
+                y=this->height()-chart_y[(int)(data_index)]*OSC_multiple_y-30;
+
             }
 
             if(last_x+offset_x>=30) //把超出横坐标显示范围的内容屏蔽掉
+            {
                 painter.drawLine(last_x+offset_x,last_y+offset_y,x+offset_x,y+offset_y);
+            }
+            else { //First line
+                int x0 = last_x+offset_x;
+                int y0 = last_y+offset_y;
+                int x1 = x+offset_x;
+                int y1 = y+offset_y;
+                int x_mid = 30;
+                int y_mid = y0 + (x_mid - x0)*(double)(y1 - y0)/(double)(x1 - x0);
+                if( x1 > x_mid)
+                    painter.drawLine(x_mid,y_mid,x1,y1);
+            }
+
+            // 对于高频波形来说，这种作图算法可能会丢失信息
+            // 但该算法已经精确到像素，所以在所在尺度显示上已经无法再精确，只需将丢失的信息补回即可
+            // 具体做法是：
+            // 在这里需要补充画一条线，用来显示这个区间点的y值范围，线的x轴都在这个座标点上，y轴是这个区间的最大值和最小值
+            if (false && (( x - last_x ) <= 1) && x > 30 ) // 出于性能考虑，该算法可以默认关闭
+            {
+                int y_min = chart_y[last_data_index];
+                int y_max = chart_y[last_data_index];
+                for (int j = last_data_index; j <= data_index; j++)
+                {
+                    if (chart_y[j] < y_min)
+                        y_min = chart_y[j];
+                    if (chart_y[j] > y_max)
+                        y_max = chart_y[j];
+                }
+                int range_y_min=this->height()-y_min*OSC_multiple_y-30;
+                int range_y_max=this->height()-y_max*OSC_multiple_y-30;
+//                qDebug() << "y min" << range_y_min << "y max" << range_y_max << "X" << x;
+                painter.drawLine(x+offset_x,range_y_min+offset_y,x+offset_x,range_y_max+offset_y);
+
+            }
 
             last_x=x;
             last_y=y;
+            last_data_index = data_index;
 
         }
 
 
     }
+}
+
+void OSC_chart::Set_Line_name(int Line_num,QString name)
+{
+    this->line_name[Line_num] = name;
 }
 
 //在表格中画线 添加线的数据 其中X正方向自加 不需要输入
@@ -608,7 +688,8 @@ void OSC_chart::mousePressEvent(QMouseEvent *event)
 #endif
     if(event->button() == Qt::LeftButton)
     {
-        start_x=position.x()-offset_x,start_y=position.y()-offset_y;
+        start_x=position.x()-offset_x;
+        start_y=position.y()-offset_y;
         start_flag=1;
     }
     emit clicked(event);
@@ -625,10 +706,10 @@ void OSC_chart::mouseMoveEvent(QMouseEvent *event)
     if(start_flag==1)
     {
         //防止超过最大处理数
-        if(((this->height()-position.y()+start_y)/OSC_multiple_y)<1000000)
+        if(abs((position.y() - start_y)/OSC_multiple_y)<MAX_INT_VALUE)
             offset_y=position.y()-start_y;
 
-        if(((this->width()-position.x()+start_x)/OSC_multiple_x)<1000000)
+        if(abs((position.x()-start_x)/OSC_multiple_x)<MAX_INT_VALUE)
             offset_x=position.x()-start_x;
     }
     emit slotmoveing(event);
