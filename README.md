@@ -68,3 +68,5 @@ MainWindow::MainWindow(QWidget *parent) :
 
 ### Frame 
 ![DemoFrame1](https://github.com/gengyuchao/Qt_Curve_Oscilloscope_chart/blob/master/Image/Osc_Chart_ui.png)
+
+[其他效果图](https://blog.csdn.net/gengyuchao/article/details/125532799)
